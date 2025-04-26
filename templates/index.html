@@ -14,7 +14,9 @@
     script-src 'self' 'unsafe-eval' 'unsafe-inline' https:;
     style-src 'self' 'unsafe-inline' https:;
     connect-src *;
-    media-src blob: data:;
+    img-src 'self' data: blob:;
+    media-src 'self' blob: data:;
+    worker-src 'self' blob:;
 ">
 
   <!-- Styles for layout and responsiveness -->
@@ -335,14 +337,29 @@
     let currentSentence = "";
     let manualEdit = false;
 
-    if (navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => { video.srcObject = stream; })
-        .catch(err => {
-          console.error("Camera access error:", err);
-          alert("Unable to access camera.");
-        });
-    }
+   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+  navigator.mediaDevices.getUserMedia({ 
+    video: {
+      width: { ideal: 640 },
+      height: { ideal: 480 },
+      facingMode: "user"
+    },
+    audio: false 
+  })
+  .then(stream => { 
+    video.srcObject = stream; 
+    console.log("Camera access successful"); 
+  })
+  .catch(err => {
+    console.error("Camera access error:", err);
+    alert("Unable to access camera: " + err.message);
+    document.querySelector(".detection-status").innerHTML = 
+      '<div class="status-indicator" style="background-color: red;"></div><span>Camera Error</span>';
+  });
+} else {
+  console.error("getUserMedia not supported");
+  alert("Camera access not supported in this browser.");
+}
 
     video.addEventListener('loadeddata', function () {
       function predictFrame() {
