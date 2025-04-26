@@ -15,7 +15,7 @@ import time
 import copy
 
 app = Flask(__name__, template_folder='templates')
-CORS(app) # Enable CORS for all routes
+CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST"], "allow_headers": ["Content-Type"]}}) # Enable CORS for all routes
 
 # Load model and words
 model = tf.keras.models.load_model("model.h5")
@@ -229,6 +229,11 @@ def speak_text():
             'status': 'error',
             'message': str(e)
         })
+
+@app.after_request
+def add_header(response):
+    response.headers['Content-Security-Policy'] = "default-src 'self' https: data: blob:; script-src 'self' 'unsafe-eval' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; connect-src *; img-src 'self' data: blob:; media-src 'self' blob: data:; worker-src 'self' blob:;"
+    return response
     
 @app.route('/')
 def index():
@@ -236,4 +241,5 @@ def index():
 
 
 if __name__ == '__main__':
-   app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
